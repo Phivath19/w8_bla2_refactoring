@@ -1,16 +1,18 @@
-import '../../../services/location_service.dart';
-import '../../../ui/widgets/display/bla_divider.dart';
 import 'package:flutter/material.dart';
-import '../../../model/ride/locations.dart';
-import '../../theme/theme.dart';
+import 'package:provider/provider.dart';
+import '../../../../data/repositories/location/location_repository.dart';
+import '../../../../model/ride/locations.dart';
+import '../../../../ui/theme/theme.dart';
+import '../../../../ui/widgets/display/bla_divider.dart';
 
 ///
-/// A  Location Picker is a view to pick a Location:
+/// A Location Picker is a view to pick a Location:
+/// Now uses LocationRepository instead of LocationService
 ///
 class BlaLocationPicker extends StatefulWidget {
   const BlaLocationPicker({super.key, required this.initLocation});
 
-  final Location? initLocation; // optional initial location
+  final Location? initLocation;
 
   @override
   State<BlaLocationPicker> createState() => _BlaLocationPickerState();
@@ -18,6 +20,25 @@ class BlaLocationPicker extends StatefulWidget {
 
 class _BlaLocationPickerState extends State<BlaLocationPicker> {
   String currentSearchText = "";
+  List<Location> _allLocations = [];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initLocation != null) {
+      currentSearchText = widget.initLocation!.name;
+    }
+    _loadLocations();
+  }
+
+  // Fetch locations from repository
+  Future<void> _loadLocations() async {
+    final locationRepository = context.read<LocationRepository>();
+    final locations = await locationRepository.getLocations();
+    setState(() {
+      _allLocations = locations;
+    });
+  }
 
   void onTap(Location location) {
     Navigator.pop<Location>(context, location);
@@ -27,29 +48,15 @@ class _BlaLocationPickerState extends State<BlaLocationPicker> {
     Navigator.pop(context);
   }
 
-  @override
-  void initState() {
-    super.initState();
-
-    // Initilize the search bar if any initial location
-    if (widget.initLocation != null) {
-      setState(() {
-        currentSearchText = widget.initLocation!.name;
-      });
-    }
-  }
-
   void onSearchChanged(String search) {
     setState(() {
       currentSearchText = search;
     });
   }
 
-  List<Location> get filteredLocation {
-    if (currentSearchText.length < 2) {
-      return [];
-    }
-    return LocationsService.availableLocations
+  List<Location> get filteredLocations {
+    if (currentSearchText.length < 2) return [];
+    return _allLocations
         .where(
           (location) => location.name.toUpperCase().contains(
             currentSearchText.toUpperCase(),
@@ -74,14 +81,12 @@ class _BlaLocationPickerState extends State<BlaLocationPicker> {
               onBackTap: onBackTap,
               onSearchChanged: onSearchChanged,
             ),
-
             SizedBox(height: 20),
-
             Expanded(
               child: ListView.builder(
-                itemCount: filteredLocation.length,
+                itemCount: filteredLocations.length,
                 itemBuilder: (context, index) => LocationTile(
-                  location: filteredLocation[index],
+                  location: filteredLocations[index],
                   onTap: onTap,
                 ),
               ),
@@ -143,7 +148,6 @@ class _LocationSearchBarState extends State<LocationSearchBar> {
       ),
       child: Row(
         children: [
-          // BACK ICON
           IconButton(
             onPressed: widget.onBackTap,
             icon: Icon(
@@ -152,29 +156,25 @@ class _LocationSearchBarState extends State<LocationSearchBar> {
               size: 16,
             ),
           ),
-
-          // TEXT FILED
           Expanded(
             child: TextField(
-              focusNode: _focusNode, // Keep focus
+              focusNode: _focusNode,
               controller: _searchController,
               onChanged: widget.onSearchChanged,
               style: TextStyle(color: BlaColors.textLight),
               decoration: InputDecoration(
                 hintText: "Any city, street...",
-                border: InputBorder.none, // No border
-                filled: false, // No background fill
+                border: InputBorder.none,
+                filled: false,
               ),
             ),
           ),
-
-          // CLOSE ICON
           searchIsNotEmpty
               ? IconButton(
                   onPressed: onClearTap,
                   icon: Icon(Icons.close, color: BlaColors.iconLight, size: 16),
                 )
-              : SizedBox.shrink(), // Hides the icon if text field is empty
+              : SizedBox.shrink(),
         ],
       ),
     );
@@ -185,11 +185,9 @@ class LocationTile extends StatelessWidget {
   const LocationTile({super.key, required this.location, required this.onTap});
 
   final Location location;
-
   final ValueChanged<Location> onTap;
 
   String get title => location.name;
-
   String get subTitle => location.country.name;
 
   @override
@@ -199,13 +197,11 @@ class LocationTile extends StatelessWidget {
         ListTile(
           onTap: () => onTap(location),
           leading: Icon(Icons.history, color: BlaColors.iconLight),
-
           title: Text(title, style: BlaTextStyles.body),
           subtitle: Text(
             subTitle,
             style: BlaTextStyles.label.copyWith(color: BlaColors.textLight),
           ),
-
           trailing: Icon(
             Icons.arrow_forward_ios,
             color: BlaColors.iconLight,

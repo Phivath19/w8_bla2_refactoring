@@ -1,5 +1,4 @@
 import 'package:blabla/model/ride/ride.dart';
-
 import '../../../data/dummy_data.dart';
 import '../../../model/ride_pref/ride_pref.dart';
 import '../ride_preference/ride_preference_repository.dart';
