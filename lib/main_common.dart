@@ -1,4 +1,5 @@
 import 'package:blabla/model/ride/ride.dart';
+import 'package:blabla/ui/state/ride_preferences_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'data/repositories/location/location_repository.dart';
@@ -27,6 +28,10 @@ class BlaBlaApp extends StatelessWidget {
         Provider<RideRepository>.value(value: rideRepository),
         Provider<RidePreferenceRepository>.value(
           value: ridePreferenceRepository,
+        ),
+        ChangeNotifierProvider<RidePreferencesState>(
+          create: (_) =>
+              RidePreferencesState(repository: ridePreferenceRepository),
         ),
       ],
       child: MaterialApp(

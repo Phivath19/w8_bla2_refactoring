@@ -1,19 +1,15 @@
-import '../../../model/ride_pref/ride_pref.dart';
-import '../../../services/ride_prefs_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../model/ride_pref/ride_pref.dart';
 import '../../../utils/animations_util.dart';
+import '../../../ui/state/ride_preferences_state.dart';
 import '../../theme/theme.dart';
-import '../../../ui/widgets/pickers/ride_preference/bla_ride_preference_picker.dart';
+import '../../widgets/pickers/ride_preference/bla_ride_preference_picker.dart';
 import '../rides_selection/rides_selection_screen.dart';
 import 'widgets/home_history_tile.dart';
 
 const String blablaHomeImagePath = 'assets/images/blabla_home.png';
 
-///
-/// This screen allows user to:
-/// - Enter his/her ride preference and launch a search on it
-/// - Or select a last entered ride preferences and launch a search on it
-///
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -22,28 +18,47 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  void onRidePrefSelected(RidePreference selectedPreference) async {
-    // 1- Ask the service to update the current preference
-    RidePrefsService.selectPreference(selectedPreference);
-
-    // 2 - Navigate to the rides screen
-    await Navigator.of(
-      context,
-    ).push(AnimationUtils.createBottomToTopRoute(RidesSelectionScreen()));
-
-    // 3 - After wait  - Update the state   - TODO Improve this with proper state managagement
-    setState(() {});
+  
+  // Listen to global state
+  @override
+  void initState() {
+    super.initState();
+    context.read<RidePreferencesState>().addListener(_onStateChanged);
   }
 
   @override
-  Widget build(context) {
+  void dispose() {
+    context.read<RidePreferencesState>().removeListener(_onStateChanged);
+    super.dispose();
+  }
+
+  void _onStateChanged() {
+    setState(() {}); 
+  }
+
+  void onRidePrefSelected(RidePreference selectedPreference) async {
+    //  Update global state
+    await context
+        .read<RidePreferencesState>()
+        .selectPreference(selectedPreference);
+
+    //  Navigate to rides screen
+    await Navigator.of(context).push(
+      AnimationUtils.createBottomToTopRoute(RidesSelectionScreen()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Stack(children: [_buildBackground(), _buildForeground()]);
   }
 
   Widget _buildForeground() {
+    // Read from global state
+    final ridePrefsState = context.read<RidePreferencesState>();
+
     return Column(
       children: [
-        // 1 - THE HEADER
         SizedBox(height: 16),
         Align(
           alignment: AlignmentGeometry.center,
@@ -53,12 +68,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         SizedBox(height: 100),
-
         Container(
           margin: EdgeInsets.symmetric(horizontal: BlaSpacings.xxl),
           decoration: BoxDecoration(
-            color: Colors.white, // White background
-            borderRadius: BorderRadius.circular(16), // Rounded corners
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -66,13 +80,13 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               // 2 - THE FORM
               BlaRidePreferencePicker(
-                initRidePreference: RidePrefsService.selectedPreference,
+                initRidePreference: ridePrefsState.currentPreference,
                 onRidePreferenceSelected: onRidePrefSelected,
               ),
               SizedBox(height: BlaSpacings.m),
 
               // 3 - THE HISTORY
-              _buildHistory(),
+              _buildHistory(ridePrefsState.history),
             ],
           ),
         ),
@@ -80,19 +94,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildHistory() {
-    // Reverse the history of preferences
-    List<RidePreference> history = RidePrefsService.preferenceHistory.reversed
-        .toList();
+  Widget _buildHistory(List<RidePreference> history) {
+    final reversedHistory = history.reversed.toList();
     return SizedBox(
-      height: 200, // Set a fixed height
+      height: 200,
       child: ListView.builder(
-        shrinkWrap: true, // Fix ListView height issue
+        shrinkWrap: true,
         physics: AlwaysScrollableScrollPhysics(),
-        itemCount: history.length,
+        itemCount: reversedHistory.length,
         itemBuilder: (ctx, index) => HomeHistoryTile(
-          ridePref: history[index],
-          onPressed: () => onRidePrefSelected(history[index]),
+          ridePref: reversedHistory[index],
+          onPressed: () => onRidePrefSelected(reversedHistory[index]),
         ),
       ),
     );
@@ -104,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
       height: 340,
       child: Image.asset(
         blablaHomeImagePath,
-        fit: BoxFit.cover, // Adjust image fit to cover the container
+        fit: BoxFit.cover,
       ),
     );
   }

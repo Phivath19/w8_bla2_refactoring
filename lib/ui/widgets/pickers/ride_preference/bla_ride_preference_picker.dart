@@ -40,9 +40,6 @@ class _BlaRidePreferencePickerState extends State<BlaRidePreferencePicker> {
   Location? arrival;
   late int requestedSeats;
 
-  // ----------------------------------
-  // Initialize the Form attributes
-  // ----------------------------------
   @override
   void initState() {
     super.initState();
@@ -157,9 +154,6 @@ class _BlaRidePreferencePickerState extends State<BlaRidePreferencePicker> {
     });
   }
 
-  // ----------------------------------
-  // Compute the widgets rendering
-  // ----------------------------------
   String get departureLabel =>
       departure != null ? departure!.name : "Leaving from";
   String get arrivalLabel => arrival != null ? arrival!.name : "Going to";
@@ -172,9 +166,6 @@ class _BlaRidePreferencePickerState extends State<BlaRidePreferencePicker> {
 
   bool get switchVisible => arrival != null || departure != null;
 
-  // ----------------------------------
-  // Build the widgets
-  // ----------------------------------
   @override
   Widget build(BuildContext context) {
     return Column(
