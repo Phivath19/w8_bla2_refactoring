@@ -9,7 +9,6 @@ import '../model/ride_pref/ride_pref.dart';
 class RidesService {
   static List<Ride> allRides = fakeRides;
 
- 
   ///
   ///  Return the relevant rides, given the passenger preferences
   ///
@@ -19,7 +18,7 @@ class RidesService {
           (ride) =>
               ride.departureLocation == preferences.departure &&
               ride.arrivalLocation == preferences.arrival &&
-              ride.availableSeats >= preferences.requestedSeats
+              ride.availableSeats >= preferences.requestedSeats,
         )
         .toList();
   }
